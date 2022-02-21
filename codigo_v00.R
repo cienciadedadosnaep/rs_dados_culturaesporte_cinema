@@ -7,7 +7,6 @@ library(magrittr)
 library(readr)
 library(rjson)
 library(RJSONIO)
-library(jsonlite)
 
 # # Library para importar dados SQL
 # library(DBI)
@@ -45,55 +44,20 @@ library(jsonlite)
 # #dbClearResult(rs)
 
 library(readr)
-dados <- read_csv("data/cinema_ssa_ba - cinema.csv")
-View(dados)
-names(dados)
-
-# Selecao de parte do banco que responde as perguntas da planilha de povoamento
-
+dd <- read_csv("data/cinema_ssa_ba - cinema.csv")
+names(dd) = c("ano","Salvador","Complexos","Bahia")
+dados<- dd %>% select(ano, Salvador, Bahia)
+nomes <- names(dados)
 ##  Perguntas e titulos 
 T_ST_P_No_Culturaesporte <- read_csv("data/TEMA_SUBTEMA_P_No - CULTURAESPORTE.csv")
 
-# Lembrar de substituir nomes de 
-# names(dados) = c("ano","q1","q2","q3","q41","q42",
-#                 "q43","q44","q45","q46","q47","q48")
-
-names(dados) = c("ano","Salvador","Complexos em Salvador","Bahia")
-
-
+#dados <- dados %>% add_column(valor = 'valor', .after = 'trimestre')
 
 #dados %<>% gather(key = classe,
-#                  value = consumo,-ano) 
-dados_cine <- dados %>% select(ano,`Salvador`,`Bahia`) %>% arrange(ano)
-dados_cine_t <- t(dados_cine)
+#                  value = valor,-trimestre,-Homens) 
 
-dados_cine_tn <- data.frame(as.character(row.names(dados_cine_t)),dados_cine_t)
 
-row.names(dados_cine_tn) <- NULL
-
-dados_cine_t_anos <- dados_cine_tn[1,]
-names(dados_cine_t_anos) <- NULL 
-dados_cine_t_anos <- as.character(dados_cine_t_anos)
-
-dados_cine_tl <-  dados_cine_tn[-c(1),]
-
-teste_cine <- list(dados_cine_t_anos,dados_cine_tl)
-
-testejson_cine <- jsonlite::toJSON(teste_cine,dataframe = "values") 
-
-teste2_cine <- gsub('\\[\\[','[',testejson_cine)
-teste3_cine <- gsub('\\]\\]\\]',']',teste2_cine)
-teste3_cine
-
-data_serie <- teste3_cine
-
-#data_serie <- paste('[',teste3,']',sep = '')
-#data_serie_mod <- gsub('\\\"','"',data_serie)
-
-#dados_adulto <- dados %>% filter(classe %in% c('q43','q44','q45','q46'))
-#dados_idoso <- dados %>% filter(classe %in% c('q47','q48'))
 #dados %<>% select(-id)
-
 # Temas Subtemas Perguntas
 
 
@@ -105,59 +69,66 @@ SAIDA_POVOAMENTO <- T_ST_P_No_Culturaesporte %>%
 SAIDA_POVOAMENTO <- as.data.frame(SAIDA_POVOAMENTO)
 
 #classes <- NULL
-#classes <- levels(as.factor(dados_ca$classe))
+#classes <- levels(as.factor(dados$classe))
 
 # Cores secundarias paleta pantone -
-corsec_recossa_azul <- c('#175676','#62acd1','#8bc6d2','#20cfef',
-                         '#d62839','#20cfef','#fe4641','#175676',
-                         '#175676','#62acd1','#8bc6d2','#20cfef')
+corsec_recossa_azul <- c('#a094e1','#dc6f6c','#62acd1','#8bc6d2',
+                         '#d62839','#20cfef','#fe4641','#175676')
+# Cor 1 - Roxo; Cor 2, 5, 7 - Vermelho; Cor 3, 4, 6, 8 - Azul
+
+simbolo_linhas <- c('emptyCircle','emptyTriangle','emptySquare',
+                    'emptyDiamond','emptyRoundRect')
 
 #for ( i in 1:length(classes)) {
-dados <- NULL
-dados <- data_serie
 
+objeto_0 <- dados %>%
+  #filter(classe %in% c(classes[1])) %>%
+  select(ano,Salvador,Bahia) %>% #filter(ano<2019) %>%
+  #arrange(trimestre) %>%
+  mutate(ano = as.character(ano)) %>% list()               
 
-#  objeto_0 <- dados %>% list()
-#    filter(classe %in% c(classes[i])) %>%
-#    select(ano,consumo) %>% filter(ano<2019) %>%
-#    arrange(ano) %>%
-#    mutate(ano = as.character(ano)) %>% list()               
-
-exportJson0 <- toJSON(teste3_cine)
+exportJson0 <- toJSON(objeto_0)
 
 
 titulo<-T_ST_P_No_Culturaesporte$TITULO[1]
 subtexto<-"Fonte: OCA/ANCINE"
 link <- T_ST_P_No_Culturaesporte$LINK[1]
 
-
-texto <- paste('{"title":{"text":"',titulo,
-               '","subtext":"',subtexto,
-               '","sublink":"',link,
-               '"},"legend":{"show":true,"top":"bottom"},"tooltip":{},"dataset":{"source":[',data_serie,
-               ']},"xAxis":[{"type":"category","gridIndex":0}],',
-               '"yAxis":[{"gridIndex":0}],',
-               '"series":[{"type":"bar",','"seriesLayoutBy":"row","color":"',corsec_recossa_azul[1],
-               '","showBackground":false,"backgroundStyle":{"color":"rgba(180, 180, 180, 0)}"},',
-               '"itemStyle":{"borderRadius":10,"borderColor":"',corsec_recossa_azul[1],
-               '","borderWidth":2}},',
-               '{"type":"bar",','"seriesLayoutBy":"row","color":"',corsec_recossa_azul[2],
-               '","showBackground":false,"backgroundStyle":{"color":"rgba(180, 180, 180, 0)}"},',
-               '"itemStyle":{"borderRadius":10,"borderColor":"',corsec_recossa_azul[2],
-               '","borderWidth":2}}',
-               ']','}',sep="")
-
-## OBS - Incluir 
-## Se for necessario coloca mais colunas além das 2 do default, e escolher 
-## uma cor pelo vetor corsec_recossa_azul[i],
-
-#{"type":"bar",','"seriesLayoutBy":"row","color":"',corsec_recossa_azul[3],
-#               '","showBackground":true,"backgroundStyle":{"color":"rgba(180, 180, 180, 0)}"},',
-#               '"itemStyle":{"borderRadius":10,"borderColor":"',corsec_recossa_azul[3],
-#               '","borderWidth":2}},',
+data_axis <- paste('["',gsub(' ','","',
+                             paste(paste(as.vector(objeto_0[[1]]$ano)),
+                                   collapse = ' ')),'"]',sep = '')
 
 
-#  SAIDA_POVOAMENTO$CODIGO[i] <- texto   
+data_serie <- paste('[',gsub(' ',',',
+                             paste(paste(as.vector(objeto_0[[1]]$Salvador)),
+                                   collapse = ' ')),']',sep = '')
+
+data_serie2 <- paste('[',gsub(' ',',',
+                              paste(paste(as.vector(objeto_0[[1]]$Bahia)),
+                                    collapse = ' ')),']',sep = '')
+#Colocar o nome da coluna depois de "objeto_0[[1]]$"
+
+texto<-paste('{"title":{"text":"',titulo,
+             '","subtext":"',subtexto,
+             '","sublink":"',link,'"},',
+             '"tooltip":{"trigger":"axis"},',
+             '"toolbox":{"left":"center","orient":"horizontal","itemSize":20,"top":45,"show":true,',
+             '"feature":{"dataZoom":{"yAxisIndex":"none"},',
+             '"dataView":{"readOnly":false},',
+             '"restore":{},"saveAsImage":{}}},"legend":{"show":true,"top":"bottom"},"xAxis":{"type":"category",',
+             '"data":',data_axis,'},',
+             '"yAxis":{"type":"value","axisLabel":{"formatter":"{value} "}},',
+             '"series":[{"name":"',nomes[2],'","data":',data_serie,',',
+             '"type":"line","color":"',corsec_recossa_azul[1],'","showBackground":true,',
+             '"backgroundStyle":{"color":"rgba(180, 180, 180, 0.2)"},"symbol":"',simbolo_linhas[1],
+             '","symbolSize":10,"itemStyle":{"borderRadius":10,"borderColor":"',corsec_recossa_azul[1],'","borderWidth":2}},',
+             '{"name":"',nomes[3],'","data":',data_serie2,',',
+             '"type":"line","color":"',corsec_recossa_azul[2],'","showBackground":true,',
+             '"backgroundStyle":{"color":"rgba(180, 180, 180, 0.2)"},"symbol":"',simbolo_linhas[2],
+             '","symbolSize":10,"itemStyle":{"borderRadius":10,"borderColor":"',corsec_recossa_azul[2],'","borderWidth":2}}',
+             ']}',sep='')
+
+#SAIDA_POVOAMENTO$CODIGO[i] <- texto   
 texto<-noquote(texto)
 
 
